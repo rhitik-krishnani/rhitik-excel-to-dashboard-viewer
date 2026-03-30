@@ -124,7 +124,7 @@ You will be provided with:
 
 1. Use ONLY these dataframes present in Available DataFrames specified above (IMPORTANT)
 2. The code MUST be executable using exec()
-3. ALWAYS store final output in a variable named: result
+3. ALWAYS store final output in a variable named: result (IMPORTANT)
 4. Do NOT use print statements
 5. Do NOT include explanations or comments
 6. Do NOT create new dataframes unless required
