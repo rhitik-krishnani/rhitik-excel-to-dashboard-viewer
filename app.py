@@ -3,7 +3,7 @@ from backend import run_pipeline
 
 st.title("Excel to Dashboard AI")
 
-uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
+uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx","xls"])
 user_query = st.text_input("Enter your query")
 
 if st.button("Generate"):
