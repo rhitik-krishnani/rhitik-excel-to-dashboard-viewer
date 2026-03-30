@@ -288,6 +288,8 @@ def run_pipeline(uploaded_file, user_query):
     exec(code_to_execute, globals())
 
     print("Step 7 ---> result of pandas code given by LLM is below !!")
+    if "result" not in globals():
+        raise Exception("LLM did not create 'result' variable")
     print(result)
 
     # ✅ ONLY FIX (SAFE JSON HANDLING — NO LOGIC CHANGE)
