@@ -3,6 +3,7 @@ import streamlit.components.v1 as components
 import subprocess
 import tempfile
 import os
+from dotenv import load_dotenv
 
 # -------------------------------
 # PAGE CONFIG (Light UI)
@@ -45,17 +46,16 @@ if run_btn:
 
         # Streamlit Cloud stores secrets only inside the Streamlit process.
         # Pass the HF key to the backend subprocess via environment variables.
+        load_dotenv()
         try:
-            hf_api_key = st.secrets["HF_API_KEY"]
+            hf_api_key = st.secrets.get("HF_API_KEY") or os.getenv("HF_API_KEY")
         except Exception:
             hf_api_key = os.getenv("HF_API_KEY")
 
         if not hf_api_key:
             st.error("Missing `HF_API_KEY`. Set it in Streamlit secrets (HF_API_KEY).")
             st.stop()
-
-        env["HF_API_KEY"] = hf_api_key
-
+            
         st.subheader("🧠 Backend Logs")
 
         # Run backend script
