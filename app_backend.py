@@ -26,7 +26,6 @@ def get_table_metadata(df, table_name, n=5):
 
 load_dotenv()
 HF_API_KEY = st.secrets.get("HF_API_KEY") or os.getenv("HF_API_KEY")
-HF_API_KEY = st.secrets.get("HF_API_KEY") or os.getenv("HF_API_KEY")
 
 MODEL = "Qwen/Qwen2.5-72B-Instruct"
 API_URL = f"https://router.huggingface.co/v1/chat/completions"
