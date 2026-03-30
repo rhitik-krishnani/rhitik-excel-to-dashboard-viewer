@@ -11,6 +11,8 @@ if st.button("Generate"):
         result, html = run_pipeline(uploaded_file, user_query)
 
         st.write("### Result Data")
+        if isinstance(result, pd.DataFrame):
+            result = result.astype(str)
         st.dataframe(result)
 
         st.write("### Chart")
