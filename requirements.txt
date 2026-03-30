@@ -5,6 +5,3 @@ streamlit
 fastapi
 httpx
 requests-aws4auth
-# Excel file support for pandas.read_excel
-openpyxl
-xlrd
