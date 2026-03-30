@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from backend import run_pipeline
 
 st.title("Excel to Dashboard AI")
