@@ -61,12 +61,12 @@ def narrate(system_prompt, user_prompt):
         raise HTTPException(status_code=500, detail=f"AI model error: {str(e)}")
 
 def get_tables_selection_prompt(user_query, metadata_json):
-    system_template = """
+    system_prompt = """
 You are an expert data analyst responsible for selecting the most relevant tables for a given user query.
 You carefully analyze table metadata including column names and sample records before making a decision.
 """
 
-    prompt_template = f"""
+    user_prompt = f"""
 User Query:
 {user_query}
 
@@ -97,17 +97,17 @@ Important:
 - Output must be strictly valid JSON.
 """
 
-    return system_template, prompt_template
+    return system_prompt, user_prompt
 
 def get_pandas_code_prompt(user_query, selected_metadata_json, question_response):
 
-    system_template = """
+    system_prompt = """
 You are an expert in generating executable pandas code to answer user queries.
 You have access only to the dataframes listed in the metadata provided.
 Your goal is to generate clean, correct, and executable Python pandas code.
 """
 
-    prompt_template = f"""
+    user_prompt = f"""
 You will be provided with:
 1. User Query
 2. Selected Tables Metadata
@@ -148,17 +148,17 @@ Important:
 - No extra text before or after
 """
 
-    return system_template, prompt_template
+    return system_prompt, user_prompt
 
 def get_html_chart_code_prompt(user_query, result_df_json):
 
-    system_template = """
+    system_prompt = """
 You are an expert data visualization engineer.
 Generate complete, valid, self-contained HTML with inline Plotly.js that best visualizes the given data.
 Output ONLY raw HTML. No explanations. No markdown. No code blocks.
 """
 
-    prompt_template = f"""
+    user_prompt = f"""
 You are provided with below :
 
 ### USER QUERY ###
@@ -214,7 +214,7 @@ You are provided with below :
 IMPORTANT : ENSURE NOT TO INCLUDE any extra text or commentary. Follow the OUTPUT FORMAT.
 """
 
-    return system_template, prompt_template
+    return system_prompt, user_prompt
 
 
 def run_pipeline(uploaded_file, user_query):
@@ -243,8 +243,8 @@ def run_pipeline(uploaded_file, user_query):
     print("Step 4 ---> metadata_json created from the dataframes !!")
     print(", ".join(json.loads(metadata_json).keys()))
 
-    system_prompt, prompt = get_tables_selection_prompt(user_query, metadata_json)
-    question_response = narrate(system_prompt, prompt)
+    system_prompt, user_prompt = get_tables_selection_prompt(user_query, metadata_json)
+    question_response = narrate(system_prompt, user_prompt)
 
     print("Step 5 ---> dataframe selection as per user query is below !!")
     print(question_response)
@@ -266,13 +266,13 @@ def run_pipeline(uploaded_file, user_query):
     print(", ".join(json.loads(selected_metadata_json).keys()))
 
 
-    system_prompt, prompt = get_pandas_code_prompt(
+    system_prompt, user_prompt = get_pandas_code_prompt(
         user_query,
         selected_metadata_json,
         question_response
     )
 
-    query_pandas_code = narrate(system_prompt, prompt)
+    query_pandas_code = narrate(system_prompt, user_prompt)
 
     code_to_execute = re.search(
         r"<python_code>\s*(.*)\s*</python_code>",
@@ -289,9 +289,9 @@ def run_pipeline(uploaded_file, user_query):
     print(result)
 
     html_code_query_code = None
-    prompt,system_prompt = get_html_chart_code_prompt(user_query, result)
+    system_prompt, user_prompt = get_html_chart_code_prompt(user_query, result)
     print("Step 8 ---> HTML code given by LLM is below !!")
-    html_code_query_code = narrate(system_prompt, system_prompt)
+    html_code_query_code = narrate(system_prompt, user_prompt)
 
     print("Step 9 ---> All 8 steps completed !!")
 
