@@ -14,6 +14,9 @@ if st.button("Generate"):
         st.write("### Result Data")
         if isinstance(result, pd.DataFrame):
             result = result.astype(str)
+            result = result.copy()
+            result = result.fillna("")
+            result = result.astype(object)
         st.dataframe(result)
 
         st.write("### Chart")
