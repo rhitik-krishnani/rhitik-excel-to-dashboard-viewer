@@ -1,17 +1,15 @@
-import pandas as pd
 import json
-from requests_aws4auth import AWS4Auth
-import re
-import httpx
-import random
 import os
+import re
+import tempfile
 from textwrap import dedent
-from fastapi import HTTPException
-from fastapi import HTTPException
-import streamlit as st
-from dotenv import load_dotenv
+
+import pandas as pd
 import requests
-print("Imported all header files sucessfully !!")
+from dotenv import load_dotenv
+from fastapi import HTTPException
+
+print("Imported all header files sucessfully !!", flush=True)
 
 def get_table_metadata(df, table_name, n=5):
     df_copy = df.head(n).copy()
@@ -241,62 +239,12 @@ ABSOLUTE RULE:
 
     return system_template, prompt_template
 
-from html.parser import HTMLParser
-
-class HTMLValidator(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.errors = []
-
-    def error(self, message):
-        self.errors.append(message)
-
-
-def is_valid_html(html_code: str):
-    try:
-        parser = HTMLValidator()
-        parser.feed(html_code)
-        parser.close()
-
-        if parser.errors:
-            return False, parser.errors
-        return True, []
-
-    except Exception as e:
-        return False, [str(e)]
-
-import os
-from http.server import HTTPServer, SimpleHTTPRequestHandler
-import threading
-import webbrowser
-
-def render_on_localhost(html_code, port=8000):
-    
-    # Save HTML file
-    file_name = "chart.html"
-    with open(file_name, "w", encoding="utf-8") as f:
-        f.write(html_code)
-
-    # Start server in background
-    def start_server():
-        server = HTTPServer(("localhost", port), SimpleHTTPRequestHandler)
-        server.serve_forever()
-
-    thread = threading.Thread(target=start_server, daemon=True)
-    thread.start()
-
-    # Open browser
-    url = f"http://localhost:{port}/{file_name}"
-    webbrowser.open(url)
-
-    print(f"🚀 Running on {url}")
-
 ## complete pipeline
 
 file_path = os.getenv("FILE_PATH")
-print(f"Step 1 ---> Read file path that is , {file_path}")
+print(f"Step 1 ---> Read file path that is , {file_path}", flush=True)
 user_query = os.getenv("USER_QUERY")
-print(f"Step 2 ---> Read User query that is , {user_query}")
+print(f"Step 2 ---> Read User query that is , {user_query}", flush=True)
 
 sheets_dict = pd.read_excel(file_path, sheet_name=None)
 
@@ -307,22 +255,22 @@ dataframes = {
 
 globals().update(dataframes)
 
-print("Step 3 ---> Dataframe created from the excel file read !!")
-print(dataframes.keys())
+print("Step 3 ---> Dataframe created from the excel file read !!", flush=True)
+print(dataframes.keys(), flush=True)
 
 metadata_dict = {
     table_name: get_table_metadata(df, table_name)
     for table_name, df in dataframes.items()
 }
 metadata_json = json.dumps(metadata_dict, indent=2)
-print("Step 4 ---> metadata_json created from the dataframes !!")
-print(", ".join(json.loads(metadata_json).keys()))
+print("Step 4 ---> metadata_json created from the dataframes !!", flush=True)
+print(", ".join(json.loads(metadata_json).keys()), flush=True)
 
 system_prompt, prompt = get_tables_selection_prompt(user_query, metadata_json)
 question_response = narrate(system_prompt, prompt)
 
-print("Step 5 ---> dataframe selection as per user query is below !!")
-print(question_response)
+print("Step 5 ---> dataframe selection as per user query is below !!", flush=True)
+print(question_response, flush=True)
 
 if isinstance(question_response, str):
     question_response = json.loads(question_response)
@@ -337,8 +285,8 @@ selected_metadata = {
 
 selected_metadata_json = json.dumps(selected_metadata, indent=2)
 
-print("Step 6 ---> selected_metadata_json as per user query is below !!")
-print(", ".join(json.loads(selected_metadata_json).keys()))
+print("Step 6 ---> selected_metadata_json as per user query is below !!", flush=True)
+print(", ".join(json.loads(selected_metadata_json).keys()), flush=True)
 
 
 system_prompt, prompt = get_pandas_code_prompt(
@@ -361,14 +309,21 @@ for name, df in dataframes.items():
 
 exec(code_to_execute, globals())
 
-print("Step 7 ---> result of pandas code given by LLM is below !!")
-print(result)
+print("Step 7 ---> result of pandas code given by LLM is below !!", flush=True)
+print(result, flush=True)
 
 
 html_code_query_code = None
 system_prompt, prompt = get_html_chart_code_prompt(user_query, result)
-print("Step 8 ---> HTML code given by LLM is below !!")
+print("Step 8 ---> HTML code given by LLM is below !!", flush=True)
 html_code_query_code = narrate(system_prompt, prompt)
 
-print("Step 9 ---> All 8 steps completed rendoring on localhost !! ")
-render_on_localhost(html_code_query_code, port=8000)
+print("Step 9 ---> All steps completed. Preparing HTML output for Streamlit UI.", flush=True)
+
+with tempfile.NamedTemporaryFile(
+    delete=False, suffix=".html", mode="w", encoding="utf-8"
+) as f:
+    f.write(html_code_query_code)
+    html_file_path = f.name
+
+print(f"HTML_FILE_PATH={html_file_path}", flush=True)
