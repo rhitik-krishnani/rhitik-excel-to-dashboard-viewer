@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import subprocess
 import tempfile
 import os
@@ -42,6 +43,19 @@ if run_btn:
         env["USER_QUERY"] = user_query
         env["FILE_PATH"] = temp_file_path
 
+        # Streamlit Cloud stores secrets only inside the Streamlit process.
+        # Pass the HF key to the backend subprocess via environment variables.
+        try:
+            hf_api_key = st.secrets["HF_API_KEY"]
+        except Exception:
+            hf_api_key = os.getenv("HF_API_KEY")
+
+        if not hf_api_key:
+            st.error("Missing `HF_API_KEY`. Set it in Streamlit secrets (HF_API_KEY).")
+            st.stop()
+
+        env["HF_API_KEY"] = hf_api_key
+
         st.subheader("🧠 Backend Logs")
 
         # Run backend script
@@ -56,11 +70,17 @@ if run_btn:
         output_placeholder = st.empty()
 
         logs = ""
+        html_file_path = None
 
         # Stream logs live
         for line in process.stdout:
-            logs += line
-            output_placeholder.code(logs)
+            line = line.rstrip("\n")
+            if line.startswith("HTML_FILE_PATH="):
+                html_file_path = line.split("HTML_FILE_PATH=", 1)[1].strip()
+                continue
+
+            logs += line + "\n"
+            output_placeholder.code(logs[-40000:])
 
         process.wait()
 
@@ -70,6 +90,19 @@ if run_btn:
             st.error(error)
 
         else:
+            if html_file_path and os.path.exists(html_file_path):
+                try:
+                    with open(html_file_path, "r", encoding="utf-8") as f:
+                        html_code = f.read()
+
+                    st.subheader("📈 Generated Chart")
+                    components.html(html_code, height=650, scrolling=True)
+                finally:
+                    try:
+                        os.remove(html_file_path)
+                    except Exception:
+                        pass
+
             st.success("✅ Completed")
 
     except Exception as e:
