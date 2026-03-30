@@ -7,7 +7,6 @@ import random
 import os
 from textwrap import dedent
 from fastapi import HTTPException
-from fastapi import HTTPException
 import streamlit as st
 from dotenv import load_dotenv
 import requests
@@ -124,7 +123,7 @@ You will be provided with:
 
 ### Strict Instructions for Code Generation:
 
-1. Use ONLY these dataframes: {question_response}
+1. Use ONLY these dataframes present in Available DataFrames specified above (IMPORTANT)
 2. The code MUST be executable using exec()
 3. ALWAYS store final output in a variable named: result
 4. Do NOT use print statements
@@ -274,11 +273,22 @@ def run_pipeline(uploaded_file, user_query):
 
     query_pandas_code = narrate(system_prompt, user_prompt)
 
-    code_to_execute = re.search(
-        r"<python_code>\s*(.*)\s*</python_code>",
-        query_pandas_code,
-        re.DOTALL
-    ).group(1)
+    # code_to_execute = re.search(
+    #     r"<python_code>\s*(.*)\s*</python_code>",
+    #     query_pandas_code,
+    #     re.DOTALL
+    # ).group(1)
+    match = re.search(
+    r"<python_code>\s*(.*)\s*</python_code>",
+    query_pandas_code,
+    re.DOTALL
+)
+
+    if not match:
+        raise Exception("LLM did not return valid python code")
+    
+    code_to_execute = match.group(1)
+    
 
     for name, df in dataframes.items():
         globals()[name] = df
@@ -289,7 +299,8 @@ def run_pipeline(uploaded_file, user_query):
     print(result)
 
     html_code_query_code = None
-    system_prompt, user_prompt = get_html_chart_code_prompt(user_query, result)
+    result_json = result.to_json(orient="records")
+    system_prompt, user_prompt = get_html_chart_code_prompt(user_query, result_json)
     print("Step 8 ---> HTML code given by LLM is below !!")
     html_code_query_code = narrate(system_prompt, user_prompt)
 
