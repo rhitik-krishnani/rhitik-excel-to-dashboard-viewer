@@ -10,6 +10,7 @@ from fastapi import HTTPException
 import streamlit as st
 from dotenv import load_dotenv
 import requests
+
 print("Imported all header files sucessfully !!")
 
 def get_table_metadata(df, table_name, n=5):
@@ -34,7 +35,6 @@ headers = {
     "Authorization": f"Bearer {HF_API_KEY}",
     "Content-Type": "application/json"
 }
-
 
 def narrate(system_prompt, user_prompt):
     try:
@@ -95,7 +95,6 @@ Important:
 - Table names MUST exactly match the top-level keys from the metadata JSON.
 - Output must be strictly valid JSON.
 """
-
     return system_prompt, user_prompt
 
 def get_pandas_code_prompt(user_query, selected_metadata_json, question_response):
@@ -146,7 +145,6 @@ Important:
 - Output ONLY valid python code inside <python_code> tags
 - No extra text before or after
 """
-
     return system_prompt, user_prompt
 
 def get_html_chart_code_prompt(user_query, result_df_json):
@@ -212,7 +210,6 @@ You are provided with below :
 
 IMPORTANT : ENSURE NOT TO INCLUDE any extra text or commentary. Follow the OUTPUT FORMAT.
 """
-
     return system_prompt, user_prompt
 
 
@@ -273,16 +270,11 @@ def run_pipeline(uploaded_file, user_query):
 
     query_pandas_code = narrate(system_prompt, user_prompt)
 
-    # code_to_execute = re.search(
-    #     r"<python_code>\s*(.*)\s*</python_code>",
-    #     query_pandas_code,
-    #     re.DOTALL
-    # ).group(1)
     match = re.search(
-    r"<python_code>\s*(.*)\s*</python_code>",
-    query_pandas_code,
-    re.DOTALL
-)
+        r"<python_code>\s*(.*)\s*</python_code>",
+        query_pandas_code,
+        re.DOTALL
+    )
 
     if not match:
         raise Exception("LLM did not return valid python code")
@@ -298,8 +290,21 @@ def run_pipeline(uploaded_file, user_query):
     print("Step 7 ---> result of pandas code given by LLM is below !!")
     print(result)
 
+    # ✅ ONLY FIX (SAFE JSON HANDLING — NO LOGIC CHANGE)
     html_code_query_code = None
-    result_json = result.to_json(orient="records")
+
+    if isinstance(result, pd.DataFrame):
+        try:
+            result = result.fillna("")
+            result = result.astype(str)
+            result_json = result.to_json(orient="records")
+        except Exception as e:
+            print("JSON conversion error:", e)
+            result_json = "[]"
+    else:
+        print("Result is not DataFrame:", type(result))
+        result_json = json.dumps(result) if result is not None else "[]"
+
     system_prompt, user_prompt = get_html_chart_code_prompt(user_query, result_json)
     print("Step 8 ---> HTML code given by LLM is below !!")
     html_code_query_code = narrate(system_prompt, user_prompt)
