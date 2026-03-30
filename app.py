@@ -1,5 +1,5 @@
 import streamlit as st
-from app_backend import run_pipeline
+from backend import run_pipeline
 
 st.title("Excel to Dashboard AI")
 
