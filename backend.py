@@ -290,9 +290,9 @@ def run_pipeline(uploaded_file, user_query):
     print("Step 7 ---> result of pandas code given by LLM is below !!")
     if "result" not in globals():
         raise Exception("LLM did not create 'result' variable")
+    result = globals()["result"]
     print(result)
 
-    # ✅ ONLY FIX (SAFE JSON HANDLING — NO LOGIC CHANGE)
     html_code_query_code = None
 
     if isinstance(result, pd.DataFrame):
